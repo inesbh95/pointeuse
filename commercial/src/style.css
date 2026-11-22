@@ -1,0 +1,57 @@
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #123A3A; --brand2: #1d5555; --accent: #E08A1E; --ok: #1F7A4D; --warn: #A8660B; --bad: #B4432E;
+  --okSoft: #E3F3EA; --warnSoft: #FBF0DC; --badSoft: #F8E6E2; --ink: #1C2626; --muted: #5b6b6b; --line: #dde5e3; --bg: #f4f7f6;
+}
+html, body { font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; background: #fff; }
+.page:last-child { page-break-after: auto; }
+.pad { padding: 14mm 15mm 12mm; }
+h1 { font-size: 26pt; line-height: 1.12; letter-spacing: -0.5px; }
+h2 { font-size: 14pt; color: var(--brand); margin-bottom: 3mm; }
+h3 { font-size: 11pt; margin-bottom: 1mm; }
+p.lead { font-size: 12pt; color: #d9e6e4; margin-top: 4mm; max-width: 120mm; }
+.hero { background: linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%); color: #fff; padding: 14mm 15mm 12mm; position: relative; }
+.hero .tag { display: inline-block; background: var(--accent); color: #fff; font-weight: 700; font-size: 8.5pt; letter-spacing: .6px; text-transform: uppercase; padding: 1.2mm 3mm; border-radius: 10mm; margin-bottom: 5mm; }
+.logo { font-weight: 800; font-size: 13pt; letter-spacing: .3px; display: flex; align-items: center; gap: 2.5mm; margin-bottom: 8mm; }
+.logo .dot { width: 7mm; height: 7mm; border-radius: 2mm; background: var(--accent); display: grid; place-items: center; font-size: 11pt; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.card { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm; background: #fff; }
+.card.soft { background: var(--bg); border-color: transparent; }
+.icon { width: 8mm; height: 8mm; border-radius: 2mm; background: var(--okSoft); color: var(--ok); display: grid; place-items: center; font-weight: 800; margin-bottom: 2mm; font-size: 11pt; }
+.muted { color: var(--muted); }
+.small { font-size: 9pt; }
+ul.check { list-style: none; }
+ul.check li { padding-left: 5mm; position: relative; margin: 1mm 0; }
+ul.check li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 800; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 2mm 2.5mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 9pt; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.pill { display: inline-block; padding: .6mm 2.4mm; border-radius: 10mm; font-weight: 700; font-size: 8.5pt; }
+.pill.ok { background: var(--okSoft); color: var(--ok); }
+.pill.warn { background: var(--warnSoft); color: var(--warn); }
+.pill.bad { background: var(--badSoft); color: var(--bad); }
+.footer { position: absolute; left: 15mm; right: 15mm; bottom: 8mm; display: flex; justify-content: space-between; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 2.5mm; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; counter-reset: s; }
+.step { background: var(--bg); border-radius: 3mm; padding: 4mm 3.5mm; position: relative; }
+.step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 6.5mm; height: 6.5mm; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; font-size: 9.5pt; margin-bottom: 2mm; }
+.kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 7mm; }
+.kpi div { border-left: 3px solid var(--accent); padding-left: 3mm; }
+.kpi b { display: block; font-size: 17pt; color: #fff; }
+.kpi span { color: #cfe0dd; font-size: 9pt; }
+.cta { background: var(--brand); color: #fff; border-radius: 3mm; padding: 5mm 6mm; display: flex; justify-content: space-between; align-items: center; gap: 6mm; }
+.cta b { color: var(--accent); }
+.phone { position: absolute; right: 15mm; top: 20mm; width: 52mm; height: 100mm; border-radius: 7mm; background: #0d2a2a; padding: 3mm; box-shadow: 0 6mm 14mm rgba(0,0,0,.35); }
+.phone .screen { background: #fff; border-radius: 5mm; height: 100%; padding: 4mm 3.5mm; color: var(--ink); font-size: 7.5pt; display: flex; flex-direction: column; gap: 2.2mm; }
+.phone .bar { font-weight: 800; color: var(--brand); font-size: 9pt; }
+.phone .face { margin: 1mm auto; width: 24mm; height: 28mm; border-radius: 50%; border: 1.2mm dashed var(--accent); display: grid; place-items: center; color: var(--muted); font-size: 7pt; text-align: center; }
+.phone .btn { background: var(--brand); color: #fff; text-align: center; border-radius: 2mm; padding: 2mm; font-weight: 700; }
+.phone .res { background: var(--okSoft); color: var(--ok); border-radius: 2mm; padding: 2mm; font-weight: 700; }
+.price { text-align: center; }
+.price .amt { font-size: 24pt; font-weight: 800; color: var(--brand); line-height: 1.1; }
+.price .unit { font-size: 9pt; color: var(--muted); }
+.price.featured { border: 2px solid var(--accent); position: relative; }
+.price.featured::before { content: "Le plus choisi"; position: absolute; top: -3.2mm; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 8pt; font-weight: 700; padding: .6mm 3mm; border-radius: 10mm; }
+.price ul.check { text-align: left; margin-top: 3mm; font-size: 9.3pt; }

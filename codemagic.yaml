@@ -1,0 +1,55 @@
+# Compilation de l'app iPhone sur un Mac en ligne (Codemagic), puis envoi sur TestFlight.
+# Mode d'emploi : docs/IPHONE.md
+#
+# À configurer une fois dans Codemagic (Teams › Integrations / Environment variables) :
+#   - intégration « App Store Connect » nommée  pointeuse-asc  (clé API App Store Connect)
+#   - groupe de variables  pointeuse  :
+#       SUPABASE_URL, SUPABASE_ANON_KEY   (mêmes valeurs que app/config.json)
+#       APP_STORE_APPLE_ID                (identifiant numérique de l'app dans App Store Connect)
+workflows:
+  ios-testflight:
+    name: iPhone → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    working_directory: app
+    integrations:
+      app_store_connect: pointeuse-asc
+    environment:
+      flutter: 3.47.8
+      xcode: latest
+      cocoapods: default
+      groups:
+        - pointeuse
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.pointeuse.pointeuse
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'ios-*'
+    scripts:
+      - name: Configuration de l'app (config.json)
+        script: |
+          cat > config.json <<EOF
+          {"SUPABASE_URL": "$SUPABASE_URL", "SUPABASE_ANON_KEY": "$SUPABASE_ANON_KEY", "GOOGLE_CLOUD_PROJECT_NUMBER": 0}
+          EOF
+      - name: Dépendances
+        script: |
+          flutter pub get
+          cd ios && pod install --repo-update
+      - name: Signature
+        script: xcode-project use-profiles
+      - name: Compilation
+        script: |
+          BUILD=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0) + 1))
+          flutter build ipa --release \
+            --dart-define-from-file=config.json \
+            --build-number=$BUILD \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

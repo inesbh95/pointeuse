@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Pointeuse — Présentation</title><link rel="stylesheet" href="style.css"></head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<section class="page">
+  <div class="hero" style="height: 132mm;">
+    <div class="logo"><span class="dot">⏱</span> Pointeuse</div>
+    <span class="tag">Pointage mobile des équipes terrain</span>
+    <h1>Sachez qui est arrivé,<br>où et à quelle heure —<br><span style="color: var(--accent)">sans fraude possible.</span></h1>
+    <p class="lead">Vos employés pointent depuis leur téléphone, sur le site du client. Le visage, la position GPS et l'heure sont vérifiés par le serveur, pas par le téléphone.</p>
+    <div class="kpi" style="max-width: 120mm;">
+      <div><b>~10 s</b><span>pour pointer</span></div>
+      <div><b>15+</b><span>contrôles anti-fraude</span></div>
+      <div><b>0</b><span>matériel à installer</span></div>
+    </div>
+    <div class="phone">
+      <div class="screen">
+        <div class="bar">Mon pointage</div>
+        <div class="muted">Lundi · 07:56</div>
+        <div class="face">Clignez<br>des yeux</div>
+        <div class="btn">Pointer mon arrivée</div>
+        <div class="res">✓ Vérifié<br><span style="font-weight:500">Chantier Les Berges du Lac 2</span></div>
+        <div class="muted" style="margin-top:auto">Heure du serveur · ± 8 m</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pad" style="padding-top: 9mm;">
+    <h2>Le problème des pointeuses classiques</h2>
+    <div class="grid3" style="margin-bottom: 7mm;">
+      <div class="card soft"><h3>Équipes chez le client</h3><p class="small muted">Une badgeuse au siège ne voit pas les techniciens, agents ou ouvriers en mission.</p></div>
+      <div class="card soft"><h3>Fraude facile</h3><p class="small muted">Pointer pour un collègue, fausse localisation, VPN, heure du téléphone modifiée.</p></div>
+      <div class="card soft"><h3>Paie à la main</h3><p class="small muted">Retards et heures sup recalculés chaque mois sur des feuilles papier ou Excel.</p></div>
+    </div>
+
+    <h2>Comment ça marche</h2>
+    <div class="steps">
+      <div class="step"><h3>Arrivée sur site</h3><p class="small muted">L'employé ouvre l'appli et appuie sur « Pointer ».</p></div>
+      <div class="step"><h3>Visage vivant</h3><p class="small muted">Clignement et rotation de tête dans un ordre aléatoire, photo archivée.</p></div>
+      <div class="step"><h3>Contrôles serveur</h3><p class="small muted">Identité, GPS, site client, réseau, intégrité du téléphone, heure.</p></div>
+      <div class="step"><h3>Verdict immédiat</h3><p class="small muted"><span class="pill ok">Vérifié</span> <span class="pill warn">À vérifier</span> <span class="pill bad">Refusé</span></p></div>
+    </div>
+  </div>
+  <div class="footer"><span>Pointeuse — présentation</span><span>1 / 2</span></div>
+</section>
+
+<!-- ============================ PAGE 2 ============================ -->
+<section class="page">
+  <div class="pad">
+    <h2>Chaque fraude courante a sa parade</h2>
+    <table style="margin-bottom: 7mm;">
+      <tr><th style="width: 42%">Tentative</th><th>Comment Pointeuse la détecte</th></tr>
+      <tr><td>Pointer à la place d'un collègue</td><td>Reconnaissance faciale côté serveur + photo conservée</td></tr>
+      <tr><td>Photo ou vidéo devant la caméra</td><td>Épreuves de présence aléatoires (clignement, rotation)</td></tr>
+      <tr><td>Application de fausse position GPS</td><td>Position simulée signalée par le système, position figée, trajet impossible</td></tr>
+      <tr><td>VPN, proxy, Tor</td><td>VPN actif sur le téléphone + réputation de l'adresse IP + pays incohérent</td></tr>
+      <tr><td>Téléphone rooté ou appli modifiée</td><td>Google Play Integrity (Android)</td></tr>
+      <tr><td>Changer l'heure du téléphone</td><td>Seule l'heure du serveur fait foi ; l'écart est signalé</td></tr>
+      <tr><td>Pointer depuis chez soi</td><td>Rayon autour de chaque site client (20 m à 5 km)</td></tr>
+    </table>
+
+    <h2>Pour l'administrateur</h2>
+    <div class="grid2" style="margin-bottom: 7mm;">
+      <div class="card">
+        <ul class="check small">
+          <li><b>Tableau des présences</b> du jour : présents, retards, absents</li>
+          <li><b>Feuille de temps</b> : heures travaillées, retards, heures sup, oublis de sortie</li>
+          <li><b>Revue des pointages suspects</b> : valider ou rejeter avec une note</li>
+          <li><b>Export Excel</b> détaillé et résumé par employé et par jour</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="check small">
+          <li><b>Sites clients</b> placés sur la carte, avec leur rayon</li>
+          <li><b>Horaires et tolérance de retard</b> par entreprise, rappels de pointage</li>
+          <li><b>Plusieurs entreprises / filiales</b> dans un même compte</li>
+          <li><b>API pour ERP et paie</b> + webhooks en temps réel</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom: 8mm;">
+      <div>
+        <h2>Idéal pour</h2>
+        <p class="small">Sociétés de services et de maintenance, BTP, nettoyage et gardiennage, sociétés d'intérim, prestataires informatiques en régie, réseaux de techniciens et commerciaux terrain.</p>
+      </div>
+      <div>
+        <h2>Données et confidentialité</h2>
+        <p class="small">La position n'est relevée qu'au moment du pointage, jamais en continu. Hébergement en Europe, accès cloisonné par entreprise. Accompagnement pour la déclaration INPDP (loi n° 2004-63).</p>
+      </div>
+    </div>
+
+    <div class="cta">
+      <div>
+        <div style="font-size: 13pt; font-weight: 800;">Essai gratuit de 30 jours</div>
+        <div class="small" style="color:#cfe0dd">Jusqu'à 15 employés · mise en route en une journée · sans engagement</div>
+      </div>
+      <div class="small" style="text-align:right">
+        <b>[Votre nom]</b><br>[Téléphone] · [E-mail]<br>[Site web]
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>Pointeuse — présentation</span><span>2 / 2</span></div>
+</section>
+</body>
+</html>

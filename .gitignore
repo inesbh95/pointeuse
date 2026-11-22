@@ -1,0 +1,35 @@
+app/config.json
+app/build/
+app/.dart_tool/
+app/.flutter-plugins*
+app/ios/Pods/
+app/android/.gradle/
+supabase/.temp/
+supabase/.env
+Pointeuse.apk
+admin_web/config.json
+admin_web/build/
+admin_web/.dart_tool/
+admin_web/.firebase/
+
+# Secrets et clés (ne jamais publier)
+.env
+*.env
+!supabase/.env.example
+*.jks
+*.keystore
+key.properties
+*.p8
+*.p12
+*.mobileprovision
+.claude/
+
+# Fichiers générés
+*.apk
+*.aab
+*.ipa
+node_modules/
+.DS_Store
+
+# Script de démo : contient le mot de passe des comptes de démonstration (gardé en local)
+commercial/demo/seed_demo.sql
