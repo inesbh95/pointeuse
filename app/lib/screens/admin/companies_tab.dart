@@ -57,8 +57,23 @@ class _CompaniesTabState extends State<CompaniesTab> {
                   ListTile(
                     leading: Icon(Icons.business, color: c.active ? null : Colors.grey),
                     title: Text(c.name, style: c.active ? null : const TextStyle(color: Colors.grey)),
-                    subtitle: Text('${c.employees} compte${c.employees > 1 ? 's' : ''}${c.active ? '' : ' · désactivée'}'),
-                    trailing: Switch(value: c.active, onChanged: (_) => _toggle(c)),
+                    subtitle: Text([
+                      '${c.employees} compte${c.employees > 1 ? 's' : ''}',
+                      if (!c.active) 'désactivée',
+                      if (c.modules.isNotEmpty) 'modules : ${c.modules.join(', ')}',
+                    ].join(' · ')),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        tooltip: 'Modules',
+                        icon: const Icon(Icons.extension_outlined),
+                        onPressed: () async {
+                          await showDialog<void>(context: context, builder: (_) => _ModulesDialog(company: c));
+                          _reload();
+                          Api.instance.profileVersion.value++; // recharge les menus de l'admin connecté
+                        },
+                      ),
+                      Switch(value: c.active, onChanged: (_) => _toggle(c)),
+                    ]),
                   ),
               ]),
             );
@@ -131,5 +146,67 @@ class _CompanyDialogState extends State<_CompanyDialog> {
           TextButton(onPressed: () => Navigator.pop(context, _companyId != null), child: const Text('Annuler')),
           FilledButton(onPressed: _busy ? null : _save, child: const Text('Créer')),
         ],
+      );
+}
+
+/// Modules d'une entreprise (super-admin) : activés ou non. Les données sont conservées à la désactivation.
+class _ModulesDialog extends StatefulWidget {
+  final Company company;
+  const _ModulesDialog({required this.company});
+  @override
+  State<_ModulesDialog> createState() => _ModulesDialogState();
+}
+
+class _ModulesDialogState extends State<_ModulesDialog> {
+  late final Future<List<AppModuleInfo>> _modules = Api.instance.modules();
+  late final Set<String> _on = {...widget.company.modules};
+  String? _busy;
+
+  Future<void> _set(String key, bool enabled) async {
+    setState(() => _busy = key);
+    try {
+      await Api.instance.setCompanyModule(widget.company.id, key, enabled);
+      setState(() => enabled ? _on.add(key) : _on.remove(key));
+    } on ApiError catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text('Modules · ${widget.company.name}'),
+        content: SizedBox(
+          width: 460,
+          child: FutureBuilder<List<AppModuleInfo>>(
+            future: _modules,
+            builder: (context, snap) {
+              if (snap.hasError) return Text('Erreur : ${snap.error}');
+              if (!snap.hasData) return const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()));
+              return Column(mainAxisSize: MainAxisSize.min, children: [
+                const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.fingerprint),
+                  title: Text('Pointage'),
+                  subtitle: Text('Toujours inclus.'),
+                  trailing: Icon(Icons.check),
+                ),
+                for (final m in snap.data!)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _on.contains(m.key),
+                    onChanged: _busy != null ? null : (v) => _set(m.key, v),
+                    title: Text(m.label),
+                    subtitle: m.description == null ? null : Text(m.description!),
+                  ),
+                const SizedBox(height: 8),
+                Text('Désactiver un module masque ses écrans et bloque son accès ; ses données sont conservées.',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ]);
+            },
+          ),
+        ),
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer'))],
       );
 }

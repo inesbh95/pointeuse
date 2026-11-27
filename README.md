@@ -112,6 +112,23 @@ C'est ce qui prouve que l'application n'a pas été modifiée et que le téléph
 
 Sur un Mac, `setup.sh` ajoute les autorisations caméra et localisation et fixe iOS 15.5 minimum (exigé par ML Kit). Ensuite `cd ios && pod install`.
 
+## Modules
+
+Le pointage est toujours inclus. Les autres fonctions sont des **modules** que le super-admin
+active par entreprise (administration web › Entreprises › icône *Modules*). Désactiver un module
+masque ses écrans et bloque son accès côté serveur ; ses données sont conservées.
+
+| Module | Rôle |
+|---|---|
+| `tickets` | L'admin crée des tickets dans le backoffice (tableau Kanban) et les assigne ; l'employé les traite dans l'app mobile (*Mes tickets* : démarrer, signaler un blocage, terminer, commenter, joindre des photos), l'admin valide. Import possible depuis Odoo ou un autre système par l'API (`POST /tickets`, voir `docs/API_ERP.md`). |
+
+**Ajouter un module** : une ligne dans la table `modules`, des tables préfixées par le nom du module
+dont chaque règle d'accès vérifie `has_module(company_id, '<module>')`, et ses écrans dans `lib/<module>/`
+des deux applications, affichés seulement si `profile.hasModule('<module>')`. Les modules ne dépendent
+que du cœur (profils, entreprises, absences), jamais les uns des autres.
+
+Après mise à jour du serveur : `supabase db push` puis `supabase functions deploy api webhook-dispatch`.
+
 ## Réglages
 
 Les règles se trouvent dans la table `settings` (Supabase › Table Editor). Pour chaque alerte : `block` refuse le pointage, `warn` l'enregistre « à vérifier ».

@@ -28,6 +28,7 @@ if [[ "${OSTYPE:-}" == darwin* ]]; then
   P=ios/Runner/Info.plist
   PB=/usr/libexec/PlistBuddy
   $PB -c "Add :NSCameraUsageDescription string La caméra vérifie votre visage au moment du pointage." "$P" 2>/dev/null || true
+  $PB -c "Add :NSPhotoLibraryUsageDescription string Vos photos servent uniquement à joindre une image à un ticket." "$P" 2>/dev/null || true
   $PB -c "Add :NSLocationWhenInUseUsageDescription string Votre position est enregistrée uniquement au moment du pointage, pour confirmer votre présence sur le site client." "$P" 2>/dev/null || true
   if [ -f ios/Podfile ]; then
     sed -i '' -e "s/^# platform :ios, .*/platform :ios, '15.5'/" -e "s/^platform :ios, .*/platform :ios, '15.5'/" ios/Podfile

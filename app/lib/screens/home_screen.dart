@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/api.dart';
 import '../services/reminder_service.dart';
+import '../tickets/my_tickets_screen.dart';
+import '../tickets/tickets.dart';
 import 'admin/admin_screen.dart';
 import 'history_screen.dart';
 import 'password_dialog.dart';
@@ -18,12 +20,27 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _tab = 0;
   bool _exactDismissed = false;
+  final _tickets = GlobalKey<MyTicketsScreenState>();
+  int _todo = 0; // tickets « À faire » assignés : pastille du menu
+
+  bool get _hasTickets => widget.profile.hasModule(ticketsModule);
+
+  Future<void> _refreshTodo() async {
+    if (!_hasTickets) return;
+    try {
+      final n = await TicketsApi.instance.myTodoCount();
+      if (mounted && n != _todo) setState(() => _todo = n);
+    } catch (_) {
+      // hors ligne : la pastille sera mise à jour plus tard
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ReminderService.sync(widget.profile.companyId);
+    _refreshTodo();
   }
 
   @override
@@ -35,7 +52,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Retour dans l'app (après le réglage Android, ou le lendemain) : on reprogramme les rappels.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) ReminderService.sync(widget.profile.companyId);
+    if (state == AppLifecycleState.resumed) {
+      ReminderService.sync(widget.profile.companyId);
+      _refreshTodo();
+      if (_hasTickets) _tickets.currentState?.reload();
+    }
   }
 
   /// Bandeau : rappels à l'heure exacte (sinon Android peut les retarder jusqu'à 1 h).
@@ -58,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final pages = [
       PunchScreen(profile: widget.profile),
       const HistoryScreen(),
+      if (_hasTickets) MyTicketsScreen(key: _tickets, profile: widget.profile, onChanged: _refreshTodo),
       if (widget.profile.isAdmin) AdminScreen(profile: widget.profile),
     ];
     return Scaffold(
@@ -97,10 +119,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
+        onDestinationSelected: (i) {
+          setState(() => _tab = i);
+          if (_hasTickets && i == 2) _tickets.currentState?.reload();
+        },
         destinations: [
           const NavigationDestination(icon: Icon(Icons.fingerprint), label: 'Pointer'),
           const NavigationDestination(icon: Icon(Icons.history), label: 'Mes pointages'),
+          if (_hasTickets)
+            NavigationDestination(
+              icon: Badge(isLabelVisible: _todo > 0, label: Text('$_todo'), child: const Icon(Icons.confirmation_number_outlined)),
+              label: 'Mes tickets',
+            ),
           if (widget.profile.isAdmin) const NavigationDestination(icon: Icon(Icons.admin_panel_settings), label: 'Administration'),
         ],
       ),

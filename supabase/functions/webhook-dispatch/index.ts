@@ -3,7 +3,8 @@
 //
 // Requête envoyée à l'ERP :
 //   POST <url>   Content-Type: application/json
-//   X-Pointeuse-Event: punch.created | punch.reviewed | absence.created | absence.deleted | employee.created | employee.updated | ping
+//   X-Pointeuse-Event: punch.created | punch.reviewed | absence.created | absence.deleted | employee.created | employee.updated
+//                      | ticket.created | ticket.assigned | ticket.status_changed | ticket.updated | ticket.commented | ping
 //   X-Pointeuse-Delivery: <id unique de l'envoi>      (identique à chaque relance : anti-doublon)
 //   X-Pointeuse-Timestamp: <secondes Unix>
 //   X-Pointeuse-Signature: sha256=<hex HMAC-SHA256(secret, "<timestamp>.<corps>")>

@@ -7,7 +7,10 @@ class Profile {
   final String? companyId;
   final String? companyName;
   final bool sitesEnabled; // option de l'entreprise : gestion des sites clients
-  const Profile({required this.id, required this.fullName, this.matricule, required this.role, required this.active, this.companyId, this.companyName, this.sitesEnabled = false});
+  final Set<String> modules; // modules activés pour l'entreprise par le super-admin (ex. 'tickets')
+  const Profile({required this.id, required this.fullName, this.matricule, required this.role, required this.active, this.companyId, this.companyName, this.sitesEnabled = false, this.modules = const {}});
+
+  bool hasModule(String key) => modules.contains(key);
 
   /// Admin de son entreprise, ou super-admin (toutes les entreprises).
   bool get isAdmin => role == 'admin' || role == 'superadmin';
@@ -22,7 +25,24 @@ class Profile {
         companyId: j['company_id'] as String?,
         companyName: (j['company'] as Map?)?['name'] as String?,
         sitesEnabled: (j['company'] as Map?)?['sites_enabled'] as bool? ?? false,
+        modules: enabledModules((j['company'] as Map?)?['company_modules']),
       );
+}
+
+/// Clés des modules activés, à partir de la liste company_modules(module_key, enabled).
+Set<String> enabledModules(Object? rows) => {
+      for (final m in (rows as List?) ?? const [])
+        if ((m as Map)['enabled'] == true) m['module_key'] as String,
+    };
+
+/// Module du catalogue (Tickets, et demain RH…).
+class AppModuleInfo {
+  final String key;
+  final String label;
+  final String? description;
+  const AppModuleInfo({required this.key, required this.label, this.description});
+  factory AppModuleInfo.fromJson(Map<String, dynamic> j) =>
+      AppModuleInfo(key: j['key'] as String, label: j['label'] as String, description: j['description'] as String?);
 }
 
 class Company {
@@ -30,13 +50,15 @@ class Company {
   final String name;
   final bool active;
   final int employees;
-  const Company({required this.id, required this.name, required this.active, required this.employees});
+  final Set<String> modules;
+  const Company({required this.id, required this.name, required this.active, required this.employees, this.modules = const {}});
 
   factory Company.fromJson(Map<String, dynamic> j) => Company(
         id: j['id'] as String,
         name: j['name'] as String,
         active: (j['active'] ?? true) as bool,
         employees: ((j['profiles'] as List?)?.firstOrNull as Map?)?['count'] as int? ?? 0,
+        modules: enabledModules(j['company_modules']),
       );
 }
 
@@ -271,7 +293,8 @@ class ApiKey {
   final DateTime createdAt;
   final DateTime? lastUsedAt;
   final DateTime? revokedAt;
-  const ApiKey({required this.id, required this.label, required this.prefix, required this.createdAt, this.lastUsedAt, this.revokedAt});
+  final List<String> scopes; // 'read', 'tickets:write'
+  const ApiKey({required this.id, required this.label, required this.prefix, required this.createdAt, this.lastUsedAt, this.revokedAt, this.scopes = const ['read']});
 
   bool get active => revokedAt == null;
 
@@ -284,6 +307,7 @@ class ApiKey {
       createdAt: t(j['created_at'])!,
       lastUsedAt: t(j['last_used_at']),
       revokedAt: t(j['revoked_at']),
+      scopes: ((j['scopes'] as List?) ?? const ['read']).cast<String>(),
     );
   }
 }

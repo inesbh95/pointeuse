@@ -50,7 +50,7 @@ class Api {
   }
 
   Future<Profile> me() async {
-    final row = await _db.from('profiles').select('*, company:companies(name, sites_enabled)').eq('id', uid).single();
+    final row = await _db.from('profiles').select('*, company:companies(name, sites_enabled, company_modules(module_key, enabled))').eq('id', uid).single();
     return Profile.fromJson(row);
   }
 
@@ -178,7 +178,7 @@ class Api {
 
   // ---------- Entreprises (super-admin) ----------
   Future<List<Company>> companies() async {
-    final rows = await _db.from('companies').select('id, name, active, profiles(count)').order('name');
+    final rows = await _db.from('companies').select('id, name, active, profiles(count), company_modules(module_key, enabled)').order('name');
     return rows.map(Company.fromJson).toList();
   }
 
@@ -190,6 +190,15 @@ class Api {
       throw ApiError(e.code == '23505' ? 'Une entreprise porte déjà ce nom.' : 'Création impossible : ${e.message}');
     }
   }
+
+  // ---------- Modules (activés par le super-admin) ----------
+  Future<List<AppModuleInfo>> modules() async {
+    final rows = await _db.from('modules').select('key, label, description').order('position');
+    return rows.map(AppModuleInfo.fromJson).toList();
+  }
+
+  Future<void> setCompanyModule(String companyId, String module, bool enabled) =>
+      _rpc<dynamic>('set_company_module', {'company': companyId, 'mod': module, 'enabled': enabled});
 
   // ---------- Rappels de pointage ----------
   // ---------- Option « gestion des sites clients » ----------
@@ -232,15 +241,16 @@ class Api {
   String get erpApiBase => '${Supabase.instance.client.rest.url.replaceFirst('/rest/v1', '')}/functions/v1/api/v1';
 
   Future<List<ApiKey>> apiKeys(String companyId) async {
-    final rows = await _db.from('api_keys').select('id, label, prefix, created_at, last_used_at, revoked_at')
+    final rows = await _db.from('api_keys').select('id, label, prefix, created_at, last_used_at, revoked_at, scopes')
         .eq('company_id', companyId).order('created_at', ascending: false);
     return rows.map(ApiKey.fromJson).toList();
   }
 
   /// Crée une clé et la renvoie en clair : elle ne pourra plus jamais être relue.
-  Future<String> createApiKey(String companyId, String label) async {
+  /// [ticketsWrite] : la clé peut aussi créer des tickets et y commenter (module Tickets).
+  Future<String> createApiKey(String companyId, String label, {bool ticketsWrite = false}) async {
     try {
-      return await _db.rpc('create_api_key', params: {'company': companyId, 'label': label}) as String;
+      return await _db.rpc('create_api_key', params: {'company': companyId, 'label': label, 'scopes': ['read', if (ticketsWrite) 'tickets:write']}) as String;
     } on PostgrestException catch (e) {
       throw ApiError(e.message);
     }

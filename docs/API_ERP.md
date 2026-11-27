@@ -1,10 +1,11 @@
 # API Pointeuse pour les ERP — v1
 
-API REST **en lecture seule** qui permet à un ERP ou à un logiciel de paie de récupérer
-les employés, les pointages et les feuilles de temps d'**une** entreprise.
+API REST qui permet à un ERP ou à un logiciel de paie de récupérer
+les employés, les pointages et les feuilles de temps d'**une** entreprise, en **lecture seule**.
+Si le module **Tickets** est activé, elle permet aussi de lire et de **créer des tickets** (§ 3 bis).
 
 - **Adresse de base** : `https://phckoqgkdmruyfifkeat.supabase.co/functions/v1/api/v1`
-- **Format** : JSON (UTF-8), méthode `GET` uniquement
+- **Format** : JSON (UTF-8), méthode `GET` (et `POST` pour les tickets uniquement)
 - **Accès** : une clé d'API par entreprise, créée par l'administrateur de l'entreprise dans
   *Administration › Réglages › API pour les ERP* (app mobile ou https://pointeuse-da5ec.web.app)
 
@@ -149,6 +150,72 @@ rappelez la même URL avec `&cursor=<next_cursor>`.
 
 Aucune photo, adresse IP ni information sur l'appareil n'est exposée par l'API.
 
+## 3 bis. Tickets (module Tickets)
+
+Disponible seulement si le super-admin a activé le module **Tickets** pour l'entreprise
+(sinon : `403 module`). L'administrateur crée les tickets dans le backoffice et les assigne ;
+l'employé les traite depuis l'app mobile.
+
+- **Lecture** : toute clé d'API.
+- **Écriture** (création, commentaires) : clé créée avec la case *« Peut aussi créer des tickets »*
+  (droit `tickets:write`), sinon `403 scope`.
+- **Règle de synchronisation** : le système d'origine fait foi pour le titre et la description ;
+  la Pointeuse fait foi pour le **statut** et les commentaires. Le statut ne se modifie jamais par l'API :
+  suivez-le par `GET /tickets?updated_since=…` ou par les webhooks `ticket.*`.
+
+Statuts : `todo` (à faire), `in_progress` (en cours), `blocked` (bloqué, motif dans `blocked_reason`),
+`review` (en revue : l'employé a terminé, l'admin doit valider), `done` (terminé), `cancelled` (annulé).
+Types : `task`, `incident`, `request`, `bug`. Priorités : `low`, `normal`, `high`, `urgent`.
+
+### `GET /tickets[?status=…][&updated_since=…][&source=…][&limit=200][&cursor=…]`
+
+Du plus récemment modifié au plus ancien. `status` accepte plusieurs valeurs séparées par des virgules ;
+`updated_since` est une date ISO 8601 ; `source` filtre l'origine (ex. `odoo`). Pagination comme `/punches`.
+
+```json
+{
+  "data": [
+    { "id": "…", "key": "TK-42", "number": 42, "title": "Fuite d'eau cuisine", "description": "…",
+      "type": "incident", "priority": "high", "status": "in_progress",
+      "assignee": { "id": "…", "matricule": "M001", "full_name": "Ali Ben Salah" },
+      "due_date": "2026-12-01", "blocked_reason": null,
+      "created_at": "…", "updated_at": "…", "started_at": "…", "done_at": null,
+      "source": "odoo", "external_id": "1543", "external_url": "https://odoo.client.tn/odoo/helpdesk/1543" }
+  ],
+  "next_cursor": null
+}
+```
+
+### `GET /tickets/{id}` — un ticket et ses commentaires
+
+Même format, avec `comments: [{ id, body, created_at, author: { matricule, full_name } | null }]`.
+Les notes internes de l'administrateur ne sont jamais exposées. `author: null` = commentaire envoyé par l'API.
+
+### `POST /tickets` — créer ou mettre à jour un ticket importé
+
+```json
+{ "source": "odoo", "external_id": "1543", "external_url": "https://odoo.client.tn/odoo/helpdesk/1543",
+  "title": "Fuite d'eau cuisine", "description": "Signalée par le client",
+  "type": "incident", "priority": "high", "due_date": "2026-12-01", "assignee_matricule": "M001" }
+```
+
+- **Idempotent** : si un ticket avec le même `source` + `external_id` existe déjà, il est **mis à jour**
+  (`200`, `created: false`) ; sinon il est créé (`201`, `created: true`). Rejouer un envoi ne crée jamais de doublon.
+- Sans `external_id`, un nouveau ticket est créé à chaque appel (`title` obligatoire).
+- En mise à jour, les champs absents gardent leur valeur ; `"assignee_matricule": null` retire l'assignation.
+- `source` : lettres minuscules, chiffres et `_` (défaut `api`). Assigné : `assignee_matricule` ou `assignee_id`.
+- Champs refusés : `status` (et tout champ inconnu) → `400 invalid`.
+
+Réponse : le ticket (même format que `GET`) et `created`.
+
+### `POST /tickets/{id}/comments` — ajouter un commentaire
+
+```json
+{ "body": "Le client a été relancé." }
+```
+
+Réponse `201` : `{ "data": { "id": "…" } }`. Visible par l'employé assigné.
+
 ## 4. Erreurs
 
 ```json
@@ -158,10 +225,13 @@ Aucune photo, adresse IP ni information sur l'appareil n'est exposée par l'API.
 | HTTP | `code` | Cause |
 |---|---|---|
 | 400 | `period`, `cursor` | paramètres `from`/`to` absents ou invalides, période > 366 jours, curseur invalide |
+| 400 | `invalid` | tickets : champ invalide ou inconnu, employé introuvable (le message précise lequel) |
 | 401 | `auth` | clé absente, invalide ou révoquée |
 | 403 | `company` | entreprise désactivée |
-| 404 | `not_found` | ressource inconnue |
-| 405 | `method` | méthode autre que `GET` |
+| 403 | `module` | module Tickets non activé pour l'entreprise |
+| 403 | `scope` | clé en lecture seule utilisée pour écrire un ticket |
+| 404 | `not_found` | ressource ou ticket inconnu |
+| 405 | `method` | méthode non acceptée (`POST` : uniquement sur `/tickets`) |
 | 500 | `server` | erreur interne : réessayer plus tard |
 
 ## 5. Bonnes pratiques d'intégration
@@ -190,6 +260,13 @@ affiché **une seule fois** : transmettez-le au développeur de l'ERP.
 | `absence.deleted` | l'administrateur a supprimé une absence (`data` décrit l'absence supprimée) |
 | `employee.created` | nouvel employé (ou employé rattaché à l'entreprise) |
 | `employee.updated` | nom, matricule, rôle ou activation modifiés ; `data.changes` liste les champs modifiés |
+| `ticket.created` | nouveau ticket (backoffice ou API) |
+| `ticket.assigned` | ticket assigné ou réassigné (`data.change.to` = nom du nouvel assigné) |
+| `ticket.status_changed` | changement de statut (`data.change.from` → `data.change.to`, motif éventuel dans `data.change.note`) |
+| `ticket.updated` | titre, description, type, priorité ou échéance modifiés (`data.change.note` liste les champs) |
+| `ticket.commented` | nouveau commentaire (jamais les notes internes) |
+
+Pour les événements `ticket.*`, `data` vaut `{ "ticket": { …même format que GET /tickets… }, "change": { from, to, note, by } }`.
 | `ping` | bouton « Envoyer un test » dans Réglages |
 
 ### Requête reçue par l'ERP

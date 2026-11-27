@@ -9,6 +9,8 @@ import '../../services/export_service.dart';
 import '../../services/location_service.dart';
 import '../../services/place_service.dart';
 import '../../theme.dart';
+import '../../tickets/admin_tickets_tab.dart';
+import '../../tickets/tickets.dart';
 import '../history_screen.dart';
 import 'companies_tab.dart';
 import 'reminders_tab.dart';
@@ -33,6 +35,7 @@ class _AdminScreenState extends State<AdminScreen> {
       (Icons.fact_check_outlined, 'Pointages', _ReviewTab(superAdmin: p.isSuperAdmin, ownCompanyId: p.companyId)),
       (Icons.calendar_month_outlined, 'Feuilles de temps', TimesheetTab(profile: p)),
       (Icons.badge_outlined, 'Employés', _EmployeesTab(profile: p)),
+      if (p.hasModule(ticketsModule) || p.isSuperAdmin) (Icons.confirmation_number_outlined, 'Tickets', AdminTicketsTab(profile: p)),
       if (p.sitesEnabled || p.isSuperAdmin) (Icons.place_outlined, 'Sites clients', _SitesTab(profile: p)),
       (Icons.tune, 'Réglages', RemindersTab(profile: p)),
       if (p.isSuperAdmin) (Icons.apartment_outlined, 'Entreprises', const CompaniesTab()),

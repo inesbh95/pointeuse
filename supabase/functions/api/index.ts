@@ -1,4 +1,4 @@
-// API publique pour les ERP (lecture seule), authentifiée par clé d'API d'entreprise.
+// API publique pour les ERP, authentifiée par clé d'API d'entreprise.
 //
 //   Authorization: Bearer ptk_…        (ou en-tête X-API-Key: ptk_…)
 //
@@ -8,16 +8,24 @@
 //   GET /api/v1/timesheets?from=…&to=…           feuilles de temps : 1 ligne par employé et par jour
 //   GET /api/v1/absences?from=…&to=…            absences justifiées et jours fériés
 //
+// Module Tickets (s'il est activé pour l'entreprise) :
+//   GET  /api/v1/tickets[?status=…][&updated_since=…][&source=…][&limit=…][&cursor=…]
+//   GET  /api/v1/tickets/{id}                    un ticket et ses commentaires (sans les notes internes)
+//   POST /api/v1/tickets                         crée, ou met à jour si (source, external_id) existe déjà
+//   POST /api/v1/tickets/{id}/comments           ajoute un commentaire  { "body": "…" }
+//   Écriture : clé avec le droit « tickets:write ». Le statut ne se modifie jamais par l'API.
+//
 // Les dates « from » / « to » sont des jours inclus, dans le fuseau horaire de l'entreprise.
 // Une clé ne donne accès qu'aux données de SON entreprise. Aucune photo, IP ni donnée d'appareil n'est exposée.
 import { adminClient } from '../_shared/http.ts';
 import { formatPunch, localParts, PUNCH_SELECT } from '../_shared/erp.ts';
+import { formatTicket, readTicketInput, TICKET_SELECT, TICKET_STATUSES } from '../_shared/tickets.ts';
 
 const headers = {
   'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-api-key, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Cache-Control': 'no-store',
 };
 const out = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
@@ -48,18 +56,23 @@ const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T00:00:00
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
-  if (req.method !== 'GET') return err(405, 'method', 'Seule la méthode GET est acceptée.');
+  if (req.method !== 'GET' && req.method !== 'POST') return err(405, 'method', 'Méthodes acceptées : GET, POST.');
 
   const url = new URL(req.url);
-  const route = url.pathname.match(/\/v1\/(company|employees|punches|timesheets|absences)\/?$/)?.[1];
-  if (!route) return err(404, 'not_found', 'Ressource inconnue. Voir la documentation : /v1/company, /v1/employees, /v1/punches, /v1/timesheets, /v1/absences.');
+  const m = url.pathname.match(/\/v1\/(company|employees|punches|timesheets|absences|tickets)(?:\/([0-9a-f-]{36})(\/comments)?)?\/?$/i);
+  const route = m?.[1];
+  const ticketId = m?.[2]?.toLowerCase(), comments = !!m?.[3];
+  if (!route || (ticketId && route !== 'tickets')) {
+    return err(404, 'not_found', 'Ressource inconnue. Voir la documentation : /v1/company, /v1/employees, /v1/punches, /v1/timesheets, /v1/absences, /v1/tickets.');
+  }
+  if (req.method === 'POST' && route !== 'tickets') return err(405, 'method', 'Seule la méthode GET est acceptée ici.');
 
   // ---- Clé d'API ----
   const key = (req.headers.get('x-api-key') || (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')).trim();
   if (!key.startsWith('ptk_')) return err(401, 'auth', "Clé d'API manquante (en-tête Authorization: Bearer ptk_…).");
   const db = adminClient();
   const { data: k } = await db.from('api_keys')
-    .select('id, company_id, revoked_at, company:companies(id, name, active, timezone, notify_in, notify_out, notify_days, late_grace_min, sites_enabled)')
+    .select('id, company_id, revoked_at, scopes, company:companies(id, name, active, timezone, notify_in, notify_out, notify_days, late_grace_min, sites_enabled)')
     .eq('key_hash', await sha256(key)).maybeSingle();
   // deno-lint-ignore no-explicit-any
   const company = (k as any)?.company;
@@ -67,6 +80,13 @@ Deno.serve(async (req) => {
   if (!company.active) return err(403, 'company', 'Entreprise désactivée.');
   await db.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', k.id);
   const tz: string = company.timezone || 'Africa/Tunis';
+
+  // ---- Module Tickets ----
+  if (route === 'tickets') {
+    const { data: enabled } = await db.rpc('has_module', { company: company.id, mod: 'tickets' });
+    if (!enabled) return err(403, 'module', "Le module Tickets n'est pas activé pour cette entreprise.");
+    return tickets(req, url, db, company.id, ticketId, comments, ((k.scopes ?? []) as string[]).includes('tickets:write'));
+  }
 
   // ---- /v1/company ----
   if (route === 'company') {
@@ -157,3 +177,97 @@ Deno.serve(async (req) => {
     next_cursor: rows.length > limit && last ? btoa(`${last.server_ts}|${last.id}`) : null,
   });
 });
+
+// ---------------------------------------------------------------------------
+// Module Tickets
+// ---------------------------------------------------------------------------
+// deno-lint-ignore no-explicit-any
+const dbError = (e: any) =>
+  e?.code === '22023' ? err(400, 'invalid', e.message)
+  : e?.code === '42501' ? err(404, 'not_found', e.message)
+  : err(500, 'server', 'Enregistrement impossible.');
+
+async function tickets(
+  req: Request, url: URL, db: ReturnType<typeof adminClient>, companyId: string,
+  id: string | undefined, comments: boolean, canWrite: boolean,
+) {
+  // ---- Écriture ----
+  if (req.method === 'POST') {
+    if (!canWrite) return err(403, 'scope', "Cette clé d'API est en lecture seule (droit « tickets:write » nécessaire).");
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return err(400, 'invalid', 'Corps JSON invalide.');
+    }
+    if (id && comments) {
+      const text = (body as { body?: unknown } | null)?.body;
+      if (typeof text !== 'string' || !text.trim()) return err(400, 'invalid', 'body obligatoire.');
+      const { data, error } = await db.rpc('ticket_api_comment', { p_company: companyId, p_ticket: id, p_body: text });
+      if (error) return dbError(error);
+      return out({ data: { id: data } }, 201);
+    }
+    if (id) return err(405, 'method', 'Pour modifier un ticket, renvoyez-le sur POST /v1/tickets avec son external_id.');
+    const r = readTicketInput(body);
+    if ('error' in r) return err(400, 'invalid', r.error);
+    const { data, error } = await db.rpc('ticket_api_upsert', { p_company: companyId, p: r.input });
+    if (error) return dbError(error);
+    const { data: t } = await db.from('ticket_tickets').select(TICKET_SELECT).eq('id', data.id).single();
+    return out({ data: formatTicket(t), created: data.created }, data.created ? 201 : 200);
+  }
+
+  // ---- Un ticket et ses commentaires (jamais les notes internes) ----
+  if (id) {
+    if (comments) return err(405, 'method', 'Utilisez GET /v1/tickets/{id} pour lire les commentaires.');
+    const { data: t } = await db.from('ticket_tickets').select(TICKET_SELECT).eq('company_id', companyId).eq('id', id).maybeSingle();
+    if (!t) return err(404, 'not_found', 'Ticket introuvable.');
+    const { data: c } = await db.from('ticket_comments')
+      .select('id, body, created_at, author:profiles!ticket_comments_author_id_fkey(matricule, full_name)')
+      .eq('ticket_id', id).eq('is_internal', false).order('created_at');
+    // deno-lint-ignore no-explicit-any
+    const list = (c ?? []).map((x: any) => ({
+      id: x.id, body: x.body, created_at: x.created_at,
+      author: x.author ? { matricule: x.author.matricule, full_name: x.author.full_name } : null,
+    }));
+    return out({ data: { ...formatTicket(t), comments: list } });
+  }
+
+  // ---- Liste, du plus récemment modifié au plus ancien (pagination : ?cursor=<next_cursor>) ----
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 200, 1), 500);
+  let q = db.from('ticket_tickets').select(TICKET_SELECT).eq('company_id', companyId)
+    .order('updated_at', { ascending: false }).order('id', { ascending: false }).limit(limit + 1);
+  const status = url.searchParams.get('status');
+  if (status) {
+    const list = status.split(',');
+    if (list.some((s) => !(TICKET_STATUSES as readonly string[]).includes(s))) {
+      return err(400, 'invalid', `status : ${TICKET_STATUSES.join(', ')} (plusieurs séparés par des virgules).`);
+    }
+    q = q.in('status', list);
+  }
+  const since = url.searchParams.get('updated_since');
+  if (since) {
+    if (isNaN(Date.parse(since))) return err(400, 'invalid', 'updated_since : date ISO 8601 attendue.');
+    q = q.gte('updated_at', new Date(since).toISOString());
+  }
+  const source = url.searchParams.get('source');
+  if (source) q = q.eq('source', source);
+  const cursor = url.searchParams.get('cursor');
+  if (cursor) {
+    let ts = '', cid = '';
+    try {
+      [ts, cid] = atob(cursor).split('|');
+    } catch { /* curseur illisible */ }
+    if (!ts || !cid || isNaN(Date.parse(ts)) || !/^[0-9a-f-]{36}$/.test(cid)) return err(400, 'cursor', 'Curseur invalide.');
+    q = q.or(`updated_at.lt.${ts},and(updated_at.eq.${ts},id.lt.${cid})`);
+  }
+  const { data, error } = await q;
+  if (error) return err(500, 'server', 'Lecture impossible.');
+  // deno-lint-ignore no-explicit-any
+  const rows = (data ?? []) as any[];
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return out({
+    data: page.map(formatTicket),
+    next_cursor: rows.length > limit && last ? btoa(`${last.updated_at}|${last.id}`) : null,
+  });
+}

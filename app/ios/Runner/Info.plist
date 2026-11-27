@@ -73,7 +73,9 @@
 		<string>fr</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>La caméra vérifie votre visage au moment du pointage.</string>
+	<string>La caméra vérifie votre visage au moment du pointage et permet de joindre une photo à un ticket.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Vos photos servent uniquement à joindre une image à un ticket.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Votre position est enregistrée uniquement au moment du pointage, pour confirmer votre présence sur le site client.</string>
 </dict>

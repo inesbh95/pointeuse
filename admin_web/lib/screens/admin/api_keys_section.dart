@@ -30,9 +30,10 @@ class _ApiKeysSectionState extends State<ApiKeysSection> {
 
   Future<void> _create() async {
     final label = TextEditingController();
+    var write = false;
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setLocal) => AlertDialog(
         title: const Text("Nouvelle clé d'API"),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (widget.companyName != null) ...[
@@ -45,16 +46,23 @@ class _ApiKeysSectionState extends State<ApiKeysSection> {
           autofocus: true,
           decoration: const InputDecoration(labelText: 'Nom de la clé', hintText: 'ex. ERP Odoo, Paie Sage'),
         ),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: write,
+            onChanged: (v) => setLocal(() => write = v ?? false),
+            title: const Text('Peut aussi créer des tickets'),
+            subtitle: const Text('Import depuis Odoo ou un autre système (module Tickets). Sinon : lecture seule.'),
+          ),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
           FilledButton(onPressed: () => Navigator.pop(ctx, label.text.trim()), child: const Text('Créer')),
         ],
-      ),
+      )),
     );
     if (name == null || name.isEmpty || !mounted) return;
     try {
-      final key = await Api.instance.createApiKey(widget.companyId, name);
+      final key = await Api.instance.createApiKey(widget.companyId, name, ticketsWrite: write);
       _reload();
       if (mounted) await _showOnce(key);
     } on ApiError catch (e) {
@@ -143,6 +151,7 @@ class _ApiKeysSectionState extends State<ApiKeysSection> {
                   title: Text(k.label, style: k.active ? null : const TextStyle(decoration: TextDecoration.lineThrough)),
                   subtitle: Text([
                     '${k.prefix}…',
+                    if (k.scopes.contains('tickets:write')) 'lecture + tickets',
                     'créée le ${f.format(k.createdAt)}',
                     k.active
                         ? (k.lastUsedAt == null ? 'jamais utilisée' : 'utilisée le ${f.format(k.lastUsedAt!)}')
