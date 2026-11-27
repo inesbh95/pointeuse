@@ -2,8 +2,8 @@
 
 | Pièce | Fichier | État |
 |---|---|---|
-| PDF de présentation (2 pages) | `Pointeuse_Presentation.pdf` | Prêt — remplacer `[Votre nom]`, `[Téléphone]`, `[E-mail]`, `[Site web]` |
-| Offre commerciale avec prix | `Pointeuse_Offre_commerciale.pdf` | Prêt — idem + `[Votre société]`, `[Matricule fiscal]` |
+| PDF de présentation (2 pages) | `Pointeuse_Presentation.pdf` | Prêt (2 pages, 3 captures) |
+| Offre commerciale avec prix | `Pointeuse_Offre_commerciale.pdf` | Prêt (3 pages, 6 captures) |
 | Compte de démonstration | `demo/seed_demo.sql` | À exécuter dans Supabase › SQL Editor |
 | Vidéo 1–2 min | `Video_script_et_captures.md` | Script prêt, à tourner (téléphone + PC) |
 | Captures d'écran | `captures/` | Après installation de la démo |
@@ -24,6 +24,24 @@ régénérez le PDF avec Edge :
 Entreprise fictive **BatiNova Services (démo)** : 1 administratrice, 10 employés, 3 sites clients
 (Lac 2, Ariana, Sfax), ~3 semaines de pointages réalistes (retards, heures sup, absences,
 pointages à vérifier et refusés). Identifiants et mot de passe en tête de `demo/seed_demo.sql`.
+
+### Lancer (dans cet ordre)
+
+1. Supabase › votre projet › **SQL Editor** › **New query**.
+2. *(Optionnel, irréversible)* Collez `demo/reset_garder_superadmin.sql` › **Run** : efface tout sauf le super-admin.
+3. Supabase › **Storage** › `punch-photos` : sélectionnez tous les dossiers › **Delete** (photos des anciens pointages).
+4. Nouvelle requête : collez `demo/seed_demo.sql` › **Run**. Le tableau final liste les 11 comptes créés.
+5. Connectez-vous sur l'appli ou l'administration web avec `demo.admin@example.com`.
+
+Ou depuis ce dossier, avec la CLI Supabase déjà liée au projet :
+
+```powershell
+supabase db query --linked -f commercial/demo/reset_garder_superadmin.sql
+```
+
+```powershell
+supabase db query --linked -f commercial/demo/seed_demo.sql
+```
 
 - Le script est ré-exécutable : relancez-le la veille d'un rendez-vous pour avoir des données à jour.
 - Il ne touche qu'à cette entreprise.

@@ -5,7 +5,7 @@
 
 <!-- ============================ PAGE 1 ============================ -->
 <section class="page">
-  <div class="hero" style="height: 132mm;">
+  <div class="hero" style="height: 122mm;">
     <div class="logo"><span class="dot">⏱</span> Pointeuse</div>
     <span class="tag">Pointage mobile des équipes terrain</span>
     <h1>Sachez qui est arrivé,<br>où et à quelle heure —<br><span style="color: var(--accent)">sans fraude possible.</span></h1>
@@ -27,9 +27,9 @@
     </div>
   </div>
 
-  <div class="pad" style="padding-top: 9mm;">
+  <div class="pad" style="padding-top: 7mm;">
     <h2>Le problème des pointeuses classiques</h2>
-    <div class="grid3" style="margin-bottom: 7mm;">
+    <div class="grid3" style="margin-bottom: 5mm;">
       <div class="card soft"><h3>Équipes chez le client</h3><p class="small muted">Une badgeuse au siège ne voit pas les techniciens, agents ou ouvriers en mission.</p></div>
       <div class="card soft"><h3>Fraude facile</h3><p class="small muted">Pointer pour un collègue, fausse localisation, VPN, heure du téléphone modifiée.</p></div>
       <div class="card soft"><h3>Paie à la main</h3><p class="small muted">Retards et heures sup recalculés chaque mois sur des feuilles papier ou Excel.</p></div>
@@ -42,6 +42,12 @@
       <div class="step"><h3>Contrôles serveur</h3><p class="small muted">Identité, GPS, site client, réseau, intégrité du téléphone, heure.</p></div>
       <div class="step"><h3>Verdict immédiat</h3><p class="small muted"><span class="pill ok">Vérifié</span> <span class="pill warn">À vérifier</span> <span class="pill bad">Refusé</span></p></div>
     </div>
+
+    <h2 style="margin-top: 5mm;">Dans l'administration</h2>
+    <div class="grid2">
+      <div><div class="shot" style="height: 36mm;"><img style="width: 200%; height: auto; margin-left: -32%; margin-top: -14mm;" src="../captures/07_a_verifier.png" alt=""></div><div class="shot-cap">Un pointage hors site arrive « À vérifier » chez le responsable.</div></div>
+      <div><div class="shot" style="height: 36mm;"><img style="width: 200%; height: auto; margin-left: -32%; margin-top: -14mm;" src="../captures/08_refuses.png" alt=""></div><div class="shot-cap">VPN, fausse position, visage inconnu : refusés et archivés.</div></div>
+    </div>
   </div>
   <div class="footer"><span>Pointeuse — présentation</span><span>1 / 2</span></div>
 </section>
@@ -50,7 +56,7 @@
 <section class="page">
   <div class="pad">
     <h2>Chaque fraude courante a sa parade</h2>
-    <table style="margin-bottom: 7mm;">
+    <table class="compact" style="margin-bottom: 6mm;">
       <tr><th style="width: 42%">Tentative</th><th>Comment Pointeuse la détecte</th></tr>
       <tr><td>Pointer à la place d'un collègue</td><td>Reconnaissance faciale côté serveur + photo conservée</td></tr>
       <tr><td>Photo ou vidéo devant la caméra</td><td>Épreuves de présence aléatoires (clignement, rotation)</td></tr>
@@ -62,26 +68,21 @@
     </table>
 
     <h2>Pour l'administrateur</h2>
-    <div class="grid2" style="margin-bottom: 7mm;">
-      <div class="card">
-        <ul class="check small">
-          <li><b>Tableau des présences</b> du jour : présents, retards, absents</li>
-          <li><b>Feuille de temps</b> : heures travaillées, retards, heures sup, oublis de sortie</li>
-          <li><b>Revue des pointages suspects</b> : valider ou rejeter avec une note</li>
-          <li><b>Export Excel</b> détaillé et résumé par employé et par jour</li>
-        </ul>
-      </div>
-      <div class="card">
-        <ul class="check small">
-          <li><b>Sites clients</b> placés sur la carte, avec leur rayon</li>
-          <li><b>Horaires et tolérance de retard</b> par entreprise, rappels de pointage</li>
-          <li><b>Plusieurs entreprises / filiales</b> dans un même compte</li>
-          <li><b>API pour ERP et paie</b> + webhooks en temps réel</li>
-        </ul>
-      </div>
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 5mm; margin-bottom: 6mm; align-items: start;">
+      <div><div class="shot" style="height: 72mm;"><img style="width: 160%; height: auto; margin-left: -26%; margin-top: -6mm;" src="../captures/09_feuille_de_temps.png" alt=""></div><div class="shot-cap">Feuille de temps de la semaine : heures, retards, absences, heures sup.</div></div>
+      <ul class="check small">
+        <li><b>Présences du jour</b> : présents, retards, absents</li>
+        <li><b>Feuille de temps</b> : heures travaillées, retards, heures sup, oublis</li>
+        <li><b>Revue des pointages suspects</b> : valider ou rejeter avec une note</li>
+        <li><b>Export Excel</b> détaillé et résumé par employé</li>
+        <li><b>Sites clients</b> placés sur la carte, avec leur rayon</li>
+        <li><b>Horaires, tolérance de retard</b> et rappels de pointage</li>
+        <li><b>Une entreprise par filiale</b>, chacune avec son administrateur ; vue consolidée du groupe sur demande</li>
+        <li><b>API pour ERP et paie</b> + webhooks en temps réel</li>
+      </ul>
     </div>
 
-    <div class="grid2" style="margin-bottom: 8mm;">
+    <div class="grid2" style="margin-bottom: 6mm;">
       <div>
         <h2>Idéal pour</h2>
         <p class="small">Sociétés de services et de maintenance, BTP, nettoyage et gardiennage, sociétés d'intérim, prestataires informatiques en régie, réseaux de techniciens et commerciaux terrain.</p>
@@ -96,9 +97,6 @@
       <div>
         <div style="font-size: 13pt; font-weight: 800;">Essai gratuit de 30 jours</div>
         <div class="small" style="color:#cfe0dd">Jusqu'à 15 employés · mise en route en une journée · sans engagement</div>
-      </div>
-      <div class="small" style="text-align:right">
-        <b>[Votre nom]</b><br>[Téléphone] · [E-mail]<br>[Site web]
       </div>
     </div>
   </div>

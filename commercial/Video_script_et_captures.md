@@ -41,14 +41,15 @@ Nommez-les dans cet ordre dans `commercial/captures/`.
 4. `04_verifie.png` — résultat « Vérifié » avec le site client
 5. `05_historique.png` — « Mes pointages »
 
-**Administration web (`demo.admin@example.com`)**
-6. `06_presences.png` — pointages du jour (arrivées en cours)
-7. `07_a_verifier.png` — liste « À vérifier » avec un pointage hors site ouvert
-8. `08_refuses.png` — onglet « Refusés » (position simulée, visage non reconnu, VPN)
-9. `09_feuille_de_temps.png` — feuille de temps de la semaine (retards, heures sup)
-10. `10_export_excel.png` — le fichier Excel ouvert
-11. `11_sites.png` — sites clients sur la carte
-12. `12_horaires.png` — horaires, tolérance de retard et rappels
+**Administration web** : faites (2880 × 1800 ou 1800 × 1125 px) :
+- `00_admin_connexion.png` : écran de connexion
+- `06_pointages_7j.png` : pointages des 7 derniers jours (tous « Vérifié »)
+- `07_a_verifier.png` : pointage « À vérifier » ouvert (hors site à 2,6 km)
+- `08_refuses.png` : onglet « Refusés » (VPN, hors site, visage, présence)
+- `09_feuille_de_temps.png` : semaine dernière (461 h travaillées, 8 retards, 17 h sup)
+- `10_employes.png` : 11 comptes, visages enregistrés
+- `11_sites.png` : les 3 sites clients avec leur rayon
+- `12_reglages.png` : horaires, tolérance de retard, rappels, API ERP
 
-Les captures de l'administration web peuvent être faites automatiquement une fois la démo installée
-et la session ouverte dans le navigateur (voir README).
+Reste à faire à la main : la capture de l'export Excel ouvert, et l'écran de choix d'un site sur la carte
+(Sites clients › Ajouter un site › Choisir sur la carte).

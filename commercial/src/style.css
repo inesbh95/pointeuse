@@ -55,3 +55,7 @@ th { font-size: 9pt; text-transform: uppercase; letter-spacing: .4px; color: var
 .price.featured { border: 2px solid var(--accent); position: relative; }
 .price.featured::before { content: "Le plus choisi"; position: absolute; top: -3.2mm; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 8pt; font-weight: 700; padding: .6mm 3mm; border-radius: 10mm; }
 .price ul.check { text-align: left; margin-top: 3mm; font-size: 9.3pt; }
+.shot { border: 1px solid var(--line); border-radius: 2.5mm; overflow: hidden; box-shadow: 0 1.5mm 4mm rgba(18,58,58,.12); background: #f5f9f8; }
+.shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+.shot-cap { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
+table.compact td, table.compact th { padding: 1.3mm 2.2mm; font-size: 9.3pt; }
